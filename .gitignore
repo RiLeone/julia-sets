@@ -7,7 +7,9 @@ exp/
 
 *.m
 
-# Imgaes
+# Images and animations
 *.png
+*.eps
+*.gif
 
 .DS_Store
