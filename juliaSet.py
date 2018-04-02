@@ -16,13 +16,15 @@ class juliaSet:
                  imag_res = 1e2,
                  real_lim = (-1.1, 1.1),
                  imag_lim = (-1.1, 1.1),
-                 mode = "quadratic"):
+                 mode = "quadratic",
+                 verbose = True):
 
         self._real_res = real_res
         self._imag_res = imag_res
         self._real_lim = real_lim
         self._imag_lim = imag_lim
         self._mode = mode
+        self._verbose = verbose
         self._noi = 0
 
         self._plane_mesh = np.meshgrid(np.linspace(self._real_lim[0], self._real_lim[1], self._real_res), np.linspace(self._imag_lim[0], self._imag_lim[1], self._imag_res))
@@ -41,7 +43,8 @@ class juliaSet:
         self._noi = noi
 
         for ii in range(int(noi)):
-            print("Computing iteration {:d} of {:d}".format(ii + 1, noi))
+            if self._verbose:
+                print("Computing iteration {:d} of {:d}".format(ii + 1, noi))
 
             if drawandsaveframes:
                 framefilename = "frames/{:05d}.png".format(ii)
@@ -138,12 +141,12 @@ if __name__ == "__main__":
     # For quadlog version
     #   0.268 + 0.060 * 1j
 
-    C = 0.268 + 0.060 * 1j
+    C = -0.8 + 0.156 * 1j
     real_res = 1e3
     imag_res = 1e3
     real_lim = (-1.7, 1.7)
     imag_lim = (-1.2, 1.2)
-    mode = "quadlog"
+    mode = "quadratic"
 
     print("- Initializing object...")
     test = juliaSet(C = C,
@@ -154,7 +157,7 @@ if __name__ == "__main__":
                     mode = mode)
 
     print("- Start computing iterations...")
-    test.compute_iterations(100, drawandsaveframes = True)
+    test.compute_iterations(100, drawandsaveframes = False)
 
     print("- Showing final frame...")
     test.draw_result(useimshow = True, savefig = True)
