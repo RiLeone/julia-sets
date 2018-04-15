@@ -8,6 +8,7 @@ import matplotlib.pyplot as pltlib
 import matplotlib.colors as clrs
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+import PIL.Image
 
 class juliaSet:
     def __init__(self,
@@ -69,11 +70,28 @@ class juliaSet:
             self.draw_result(useimshow = True, savefig = True, savefilename = framefilename, showdrawing = False)
 
 
-    def draw_result(self, colormap = cm.hot, useimshow = True, savefig = False, savefilename = None, showdrawing = True):
+    def draw_result(self,
+                    colormap = cm.hot,
+                    visualization = "imshow",
+                    savefig = False,
+                    savefilename = None,
+                    showdrawing = True):
 
-        fig = pltlib.figure(figsize = (6,6))
+        if not visualization == "PIL":
+            fig = pltlib.figure(figsize = (6,6))
 
-        if useimshow:
+        if savefilename == None:
+            filename = visualization + "_"
+            filename += "julia_set_mode_" + self._mode
+            if not mode == "mandelbrot":
+                filename += "_C_{:.2f}j{:.2f}".format(np.real(self._C[0][0]), np.imag(self._C[0][0]))
+            filename += "_re{:.2e}_{:.2e}".format(self._real_lim[0], self._real_lim[1])
+            filename += "_im{:.2e}_{:.2e}".format(self._imag_lim[0], self._imag_lim[1])
+            filename += "_iters{:d}.png".format(self._noi)
+        else:
+            filename = savefilename
+
+        if visualization == "imshow":
             pltlib.imshow(self._julia,
                           cmap = colormap,
                           interpolation = 'bicubic',
@@ -83,7 +101,24 @@ class juliaSet:
                           vmax = 1.,
                           extent = (0., 1., 0., 1.))
             pltlib.axis('off')
-        else:
+
+        elif visualization == "PIL":
+            a = self._julia
+            a_cyclic = (6.28 * a / 20.).reshape(list(a.shape) + [1])
+            # img = np.concatenate([ 10 + 20 * np.cos(a_cyclic),
+            #                        30 + 50 * np.sin(a_cyclic),
+            #                       155 - 80 * np.cos(a_cyclic)], 2)
+            img = np.concatenate([50 - 50 * np.sin(a_cyclic),
+                                  10 - 10 * np.sin(a_cyclic),
+                                  155 - 100 * np.sin(a_cyclic)], 2)
+            # img[a == a.max()] = 255
+            a = img
+            a = np.uint8(np.clip(a, 0, 255))
+            img = PIL.Image.fromarray(a)
+            img.save("plts/" + filename)
+            # img.show()
+
+        elif visualization == "surf":
             ax = fig.add_subplot(111,
                                  projection='3d',
                                  aspect = 'equal')
@@ -108,20 +143,16 @@ class juliaSet:
             ax.axis('off')
 
         if savefig:
-            if savefilename == None:
-                filename = "julia_set_mode_" + self._mode
-                if not mode == "mandelbrot":
-                    filename += "_C_{:.2f}j{:.2f}".format(np.real(self._C[0][0]), np.imag(self._C[0][0]))
-                filename += "_re{:.2e}_{:.2e}".format(self._real_lim[0], self._real_lim[1])
-                filename += "_im{:.2e}_{:.2e}".format(self._imag_lim[0], self._imag_lim[1])
-                filename += "_iters{:d}.png".format(self._noi)
+            if not visualization == "PIL":
+                pltlib.savefig("plts/" + filename)
             else:
-                filename = savefilename
-
-            pltlib.savefig("plts/" + filename)
+                pass # img.save('plts/' + filename)
 
         if showdrawing:
-            pltlib.show()
+            if not visualization == "PIL":
+                pltlib.show()
+            else:
+                pass # img.show()
         else:
             pltlib.close(fig)
 
@@ -160,7 +191,7 @@ if __name__ == "__main__":
     test.compute_iterations(100, drawandsaveframes = False)
 
     print("- Showing final frame...")
-    test.draw_result(useimshow = True, savefig = True)
+    test.draw_result(visualization = "PIL", savefig = True)
 
     print("* ============= *")
     print("* End of Script *")
