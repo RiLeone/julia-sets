@@ -89,7 +89,7 @@ class juliaSet:
                     showdrawing = True):
 
         if not visualization == "PIL":
-            fig = pltlib.figure(figsize = (int(10 * self._real_res / 100), self._range_ratio * int(10 * self._real_res / 100)))
+            fig = pltlib.figure(figsize = (int(self._real_res / 100), self._range_ratio * int(self._real_res / 100)))
             ax = fig.add_subplot(111, aspect = 'equal')
             ax.set_position([0., 0., 1., 1.])
 
