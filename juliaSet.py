@@ -27,6 +27,9 @@ class juliaSet:
         self._mode = mode
         self._verbose = verbose
         self._noi = 0
+        self._real_range = self._real_lim[1] - self._real_lim[0]
+        self._imag_range = self._imag_lim[1] - self._imag_lim[0]
+        self._range_ratio = self._imag_range / self._real_range
 
         self._plane_mesh = np.meshgrid(np.linspace(self._real_lim[0], self._real_lim[1], self._real_res), np.linspace(self._imag_lim[0], self._imag_lim[1], self._imag_res))
 
@@ -39,7 +42,7 @@ class juliaSet:
 
         self._julia = np.float64(np.zeros_like(np.real(self._z)))
 
-    def compute_iterations(self, noi = 1e2, drawandsaveframes = False):
+    def compute_iterations(self, noi = 1e2, drawandsaveframes = False, filename = None):
 
         self._noi = noi
 
@@ -48,8 +51,12 @@ class juliaSet:
                 print("Computing iteration {:d} of {:d}".format(ii + 1, noi))
 
             if drawandsaveframes:
-                framefilename = "frames/{:05d}.png".format(ii)
-                self.draw_result(useimshow = True, savefig = True, savefilename = framefilename, showdrawing = False)
+                if filename == None:
+                    framefilename = "frames/{:05d}.png".format(ii)
+                else:
+                    framefilename = filename
+
+                self.draw_result(visualization = "imshow", savefig = True, savefilename = framefilename, showdrawing = False)
 
             if self._mode == "exponential":
                 self._z = np.exp(self._z) + self._C
@@ -65,9 +72,13 @@ class juliaSet:
         self._z = np.nan_to_num(self._z)
         self._julia = np.nan_to_num(self._julia)
 
-        if drawandsaveframes:
-            framefilename = "frames/{:05d}.png".format(noi)
-            self.draw_result(useimshow = True, savefig = True, savefilename = framefilename, showdrawing = False)
+        # if drawandsaveframes:
+        #     if filename == None:
+        #         framefilename = "frames/{:05d}.png".format(noi)
+        #     else:
+        #         framefilename = filename
+        #
+        #     self.draw_result(visualization = "imshow", savefig = True, savefilename = framefilename, showdrawing = False)
 
 
     def draw_result(self,
@@ -78,7 +89,9 @@ class juliaSet:
                     showdrawing = True):
 
         if not visualization == "PIL":
-            fig = pltlib.figure(figsize = (6,6))
+            fig = pltlib.figure(figsize = (int(10 * self._real_res / 100), self._range_ratio * int(10 * self._real_res / 100)))
+            ax = fig.add_subplot(111, aspect = 'equal')
+            ax.set_position([0., 0., 1., 1.])
 
         if savefilename == None:
             filename = visualization + "_"
@@ -116,7 +129,7 @@ class juliaSet:
             a = np.uint8(np.clip(a, 0, 255))
             img = PIL.Image.fromarray(a)
             img.save("plts/" + filename)
-            # img.show()
+            img.close()# img.show()
 
         elif visualization == "surf":
             ax = fig.add_subplot(111,
@@ -172,11 +185,30 @@ if __name__ == "__main__":
     # For quadlog version
     #   0.268 + 0.060 * 1j
 
+    phi = (1. + np.sqrt(5)) / 2.
     C = -0.8 + 0.156 * 1j
-    real_res = 1e3
-    imag_res = 1e3
-    real_lim = (-1.7, 1.7)
-    imag_lim = (-1.2, 1.2)
+    real_res = 2e3
+    imag_res = 2e3
+    # Explorer parameters
+    x0 = -0.8
+    y0 = 0.1
+    span0 = 0.1
+
+    center_factors = [[0.627083, 0.829167], [0.17778, 0.546528], [0.674306, 0.688889]]
+    new_spans = [0.01, 0.005, 0.002]
+    for cf, ns in zip(center_factors, new_spans):
+        x0 += cf[0] * span0
+        y0 += cf[1] * span0
+        span0 = ns
+
+    print("Center: (x0, y0) = ({},{})\nSpan: span0 = {}".format(x0, y0, span0))
+
+    real_lim = (x0 - 0.5 * span0, x0 + 0.5 * span0) # (-0.1, 0.1)# 1.7  #(-0.8, -0.7)
+    imag_lim = (y0 - 0.5 * span0, y0 + 0.5 * span0)  # (-0.1, 0.1)# 1.2  #( 0.1, 0.2)
+
+    real_lim = (-1.7, 1.7)  #(-0.8, -0.7)
+    imag_lim = (-1.2, 1.2)  #( 0.1, 0.2)
+
     mode = "quadratic"
 
     print("- Initializing object...")
@@ -188,10 +220,10 @@ if __name__ == "__main__":
                     mode = mode)
 
     print("- Start computing iterations...")
-    test.compute_iterations(100, drawandsaveframes = False)
+    test.compute_iterations(200, drawandsaveframes = False)
 
     print("- Showing final frame...")
-    test.draw_result(visualization = "PIL", savefig = True)
+    test.draw_result(visualization = "imshow", savefig = True)
 
     print("* ============= *")
     print("* End of Script *")
